@@ -63,6 +63,7 @@ if [[ -f ../../device/bluejay/device.conf ]]; then
   cmp -s device.conf ../../device/bluejay/device.conf \
     || fail "device.conf drifted from the descriptor"
   pass "device.conf matches the descriptor"
+  grep -qx "BOOT_UPDATE_AUTO_WRITE=no" device.conf || fail "development installer policy"
 fi
 grep -q '^PACKAGE=omamobile-device-bluejay$' device.conf || fail "the descriptor names this package"
 grep -q '^COMPATIBLE="google,gs101-bluejay"$' device.conf || fail "the descriptor is bluejay's"
@@ -116,6 +117,10 @@ for absent in usr/bin/omamobile-boot-success usr/bin/omamobile-bootctl \
               usr/lib/systemd/logind.conf.d/10-omamobile-lid.conf; do
   [[ ! -e $tmp/root/$absent ]] || fail "install includes $absent"
 done
+grep -qx 'AUTO_WRITE=no' "$tmp/root/etc/omamobile/boot-update.conf" || fail "development boot updates stay explicit"
+grep -q 'etc/omamobile/boot-update.conf' PKGBUILD || fail "boot policy is a pacman backup file"
+pass "installed boot policy is development-only and preserved by pacman"
+
 pass "install stages the udev rule, the USB link, the sleep and power-key policy and the mirrorlist, and nothing that marks a slot, loads a driver or starts hardware"
 
 net=vendor/systemd/network/20-usb-gadget.network

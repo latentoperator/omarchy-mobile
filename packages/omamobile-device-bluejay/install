@@ -22,3 +22,5 @@ install -Dm644 etc/omamobile-mirrorlist \
   "$destination/etc/pacman.d/omamobile-mirrorlist"
 install -Dm644 LICENSE "$destination/usr/share/licenses/omamobile-device-bluejay/LICENSE"
 install -Dm644 version "$destination/usr/share/omamobile/device-bluejay/version"
+
+install -Dm644 etc/boot-update.conf "$destination/etc/omamobile/boot-update.conf"

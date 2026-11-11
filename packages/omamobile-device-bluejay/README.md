@@ -3,7 +3,18 @@
 
 Omarchy Mobile's first userspace package for the Google Pixel 6a (codename bluejay, Tensor / gs101), the package `device/bluejay/device.conf` names. It hides the Android partitions from desktop tools, holds the USB address, keeps suspend on suspend-to-idle, and gives pacman the same `[omamobile]` repository as the Pixel 7 Pro. It does not drive the radio, the charger, or a camera, it enables no service, it loads no driver, and it does not mark a boot slot successful.
 
-**No Pixel 6a has run it.** Its board DTS ([kernel #179](https://github.com/derekross/linux-omarchy-mobile/pull/179)) is merged without a boot, and this package follows the same way: every file is a copy of one that runs on the Pixel 6 Pro (raven, the same SoC) or the Pixel 7 Pro, and `test/all` checks the copies. The first boot's `tools/phone-smoke` report goes to [issue #348](https://github.com/derekross/omarchy-mobile/issues/348), the 6a's own thread, and [device/bluejay/NOTES.md](../../device/bluejay/NOTES.md).
+The original 0.1.0 proposal predates the first Pixel 6a boot. A development
+handset now boots with matched historical modules and startup files; see the
+[boot/smoke report](https://github.com/derekross/omarchy-mobile/issues/348#issuecomment-6803936917)
+and [device notes](../../device/bluejay/NOTES.md). That installed development
+package has additional hardware files and is not this passive candidate.
+
+The 0.1.1 follow-up passes the host package fixtures and builds as an aarch64
+package. Its shared policy files are checked against the reference packages;
+the development boot-update policy below is additional. This candidate has
+not replaced the active development package on a phone: migration must first
+preserve its currently owned startup files, services and module policy.
+
 
 | Path | Installs to | What it does |
 | --- | --- | --- |
@@ -15,8 +26,16 @@ Omarchy Mobile's first userspace package for the Google Pixel 6a (codename bluej
 | `etc/omamobile-mirrorlist` | `/etc/pacman.d/omamobile-mirrorlist` | Where pacman finds the `[omamobile]` repository. Same file as the Pixel 7 Pro package |
 | `omamobile-device-bluejay.install` | pacman hook | Adds `[omamobile]` to `pacman.conf` before `[omarchy]`, once. Same script as the Pixel 7 Pro package |
 | `src/reboot-to.c` | `/usr/bin/reboot-to` | Reboot with a reason the bootloader understands. On a first boot the reason most likely isn't stored: the descriptor lists no `INITRAMFS_MODULES`, and raven's records that without its PMIC and reboot-mode modules `reboot-to bootloader` just boots slot B again, so fastboot is by the buttons. Same bytes as the Pixel 7 Pro package; the test checks |
+| `etc/boot-update.conf` | `/etc/omamobile/boot-update.conf` | Keeps automatic package boot-image writes disabled; pacman preserves a locally edited policy |
 | `device.conf` | `/usr/share/omamobile/device.conf` | The descriptor, the same bytes as `device/bluejay/device.conf` |
 
 `./build [DIR]` compiles `reboot-to` from this directory, `./install DESTDIR [DIR]` stages the files, and `test/all` checks the copies when it is run from the repository.
 
 Not in this package: `omamobile-bootctl` and the boot-success marker (marking slot B on the gs101 phones is on hold, [#252](https://github.com/derekross/omarchy-mobile/issues/252); without the source, `bin/omamobile initramfs` builds its freestanding helpers, as for oriole), the USB rescue, Wi-Fi, the charger, haptics, the display's module options, cameras, any modprobe blacklist, and the slot-B image hook. Each comes in when a booted 6a has given it a runbook and the evidence.
+
+Development policy: `AUTO_WRITE=no` keeps package updates from writing boot
+images. **Merge #563 first**: its installer support is required for the
+descriptor to give a new installation the same default. The policy file is
+a pacman backup file, so a deliberate local setting is preserved on upgrades.
+Historical retained-display triggers and experimental hardware startup remain
+in the separate bring-up source; this passive package enables neither.
